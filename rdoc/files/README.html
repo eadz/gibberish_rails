@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>File: README</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+  <div id="fileHeader">
+    <h1>README</h1>
+    <table class="header-table">
+    <tr class="top-aligned-row">
+      <td><strong>Path:</strong></td>
+      <td>README
+      </td>
+    </tr>
+    <tr class="top-aligned-row">
+      <td><strong>Last Update:</strong></td>
+      <td>Tue Jan 22 16:44:24 -0500 2008</td>
+    </tr>
+    </table>
+  </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <p>
+Gibberish Rails 0.1
+</p>
+<h6>=============</h6>
+<p>
+An extension to Gibberish and Rails to use it to create a multilingual web
+site using the around filter and Gibberish.
+</p>
+<p>
+The latest version of gibberish_rails can be found here: <a
+href="http://svn.myutil.com/projects/plugins/gibberish_rails">svn.myutil.com/projects/plugins/gibberish_rails</a>/
+</p>
+<p>
+Other info can be found here: <a
+href="http://myutil.com/2008/1/22/gibberish_rails-a-ruby-on-rails-plugin-to-translate-rails-with-gibberish">myutil.com/2008/1/22/gibberish_rails-a-ruby-on-rails-plugin-to-translate-rails-with-gibberish</a>
+</p>
+<p>
+This is an alpha release. Tests are not written yet. I expected this plugin
+to be radically rewritten (simplified?) once Rails core is fixed to allow
+for localization of messages. The issue for Rails core tracking this is
+here: <a
+href="http://dev.rubyonrails.org/ticket/9726">dev.rubyonrails.org/ticket/9726</a>.
+I probably didn&#8216;t find and fix all the messages in validates let
+alone rails but this should be useful to anyone trying to use Gibberish to
+run a multi-lingual web site.
+</p>
+<p>
+This plugin:
+</p>
+<ol>
+<li>Adds the method Gibberish.supported? to Gibberish::Localize to use
+it&#8216;s map of languages to determine if a locale is supported. For
+example Gibberish.supported?(:en) returns true. It can be passed a string
+or a symbol. The previous Gibberish API returned an array of languages, but
+it was just so much more efficient to use the hash Gibberish had already
+built I added my method to the api. My Helper (6) below needs this method.
+
+</li>
+<li>Redefines the Rails core method
+ActionView::Helpers::ActiveRecordHelper.error_message_for so messages are
+translates with Gibberish.
+
+</li>
+<li>Overrides default error messages in ActiveReccord:Errors to include a
+Gibberish key. The key is blank (i.e. the entire string) so they can be
+automatically re-Gibberished in step 4. (next).
+
+</li>
+<li>The method &quot;add&quot; in ActiveRecord::Errors has been overridden
+retranslate messages during the around filter. This become necessary
+because Rails 2.0.2 caches parts of messages at the class load time.
+
+</li>
+<li>Redefines the method Validations.ClassMethods.validates_length_of to
+retranslate the messages it caches at class load up time.
+
+</li>
+<li>Adds a helper method &quot;GibberishRails.best_guess_locale&quot; that can
+be used in an around filter to determine the &quot;best guess&quot; locale
+the application should be using. The highest priority is given to a
+parameter, followed by HTTP_ACCEPT_LANGUAGE, and finally the Gibberish
+default. Also, if the user wants es-mx and we support es, it will return a
+local of es. Here is an example usage that uses the session to cache the
+locale so if you are using the HTTP_ACCEPT_LANGUAGE (instead of RESTful
+routes), it will cache in the session instead of parsing headers every
+time:
+
+<pre>
+   class ApplicationController &lt; ActionController::Base
+     # ...
+     around_filter :use_best_guess_locale
+     # ...
+     # Set's the best guess language Giberish's around filter
+     def use_best_guess_locale
+       session[:locale] = GibberishRails.best_guess_locale(params[:locale], request.env['HTTP_ACCEPT_LANGUAGE']) if ( ! session[:locale] || params[:locale] || RAILS_ENV == 'development' )
+
+       Gibberish.use_language(session[:locale]) {
+         yield
+       }
+     end
+   end
+</pre>
+</li>
+</ol>
+<p>
+Notes:
+</p>
+<p>
+If you are using Peter Marklund&#8216;s gibberish_translate (<a
+href="http://www.marklunds.com/articles/one/376">www.marklunds.com/articles/one/376</a>),
+the you should change the directories it search to include this one. Also
+Peter&#8216;s plugin doesn&#8216;t pick up the Gibberish String
+&quot;foo&quot;[] (which is another way of saying &quot;foo&quot;[:foo]).
+Redefine Gibberish::Extractor methods in his plugin to be:
+</p>
+<pre>
+      def dirs_to_search
+        %w(app config lib vendor/plugins/gibberish_rails).map { |dir| &quot;#{RAILS_ROOT}/#{dir}&quot; }
+      end
+
+      def message_pattern(start_token, end_token)
+        /#{start_token}((?:[^#{end_token}](?:\\#{end_token})?)+)#{end_token}\[:*([a-z_]*)[,\]]/m
+      end
+
+      def add_messages(contents, start_token, end_token)
+        contents.scan(message_pattern(start_token, end_token)).each do |text, key|
+          key = text.tr('[   ]', '_').downcase if ( key == '' )
+          add_message(key, remove_quotes(text, end_token))
+        end
+      end
+</pre>
+<p>
+Known Issue:
+</p>
+<pre>
+  When the fields in a form are translated and validated, the div's
+  that created the red boxes aren't working...have to look into
+  that at some point.
+</pre>
+<p>
+Copyright (c) 2008 MyUtil(tm), released under the MIT license
+</p>
+<p>
+Portions of code above Copyright (c) 2007 Peter Marklund: <a
+href="http://svn.marklunds.com/plugins/gibberish_translate/MIT-LICENSE">svn.marklunds.com/plugins/gibberish_translate/MIT-LICENSE</a>
+</p>
+
+    </div>
+
+
+   </div>
+
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

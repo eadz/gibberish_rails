@@ -1,0 +1,81 @@
+Gibberish Rails 0.1
+===================
+
+An extension to Gibberish and Rails to use it to create a multilingual
+web site using the around filter and Gibberish.
+
+The latest version of gibberish_rails can be found here: http://svn.myutil.com/projects/plugins/gibberish_rails/
+
+Other info can be found here: http://myutil.com/2008/1/22/gibberish_rails-a-ruby-on-rails-plugin-to-translate-rails-with-gibberish
+
+This is an alpha release.   Tests are not written yet.   I expected
+this plugin to be radically rewritten (simplified?) once Rails core
+is fixed to allow for localization of messages.   The issue for
+Rails core tracking this is here:  http://dev.rubyonrails.org/ticket/9726.
+I probably didn't find and fix all the messages in validates let
+alone rails but this should be useful to anyone trying to use
+Gibberish to run a multi-lingual web site.
+
+This plugin:
+
+1. Adds the method Gibberish.supported? to Gibberish::Localize to use it's map of languages to determine if a locale is supported.  For example Gibberish.supported?(:en) returns true.  It can be passed a string or a symbol.   The previous Gibberish API returned an array of languages, but it was just so much more efficient to use the hash Gibberish had already built I added my method to the api.  My Helper (6) below needs this method.
+
+2. Redefines the Rails core method ActionView::Helpers::ActiveRecordHelper.error_message_for so messages are translates with Gibberish.
+
+3. Overrides default error messages in ActiveReccord:Errors to include a Gibberish key.  The key is blank (i.e. the entire string) so they can be automatically re-Gibberished in step 4. (next).
+
+4. The method "add" in ActiveRecord::Errors has been overridden retranslate messages during the around filter.   This become necessary because Rails 2.0.2 caches parts of messages at the class load time.
+
+5. Redefines the method Validations.ClassMethods.validates_length_of to retranslate the messages it caches at class load up time.
+
+6. Adds a helper method "GibberishRails.best_guess_locale" that can be used in an around filter to determine the "best guess" locale the application should be using.   The highest priority is given to a parameter, followed by HTTP_ACCEPT_LANGUAGE, and finally the Gibberish default.   Also, if the user wants es-mx and we support es, it will return a local of es.   Here is an example usage that uses the session to cache the locale so if you are using the HTTP_ACCEPT_LANGUAGE (instead of RESTful routes), it will cache in the session instead of parsing headers every time:
+
+      class ApplicationController < ActionController::Base
+        # ...
+        around_filter :use_best_guess_locale
+        # ...
+        # Set's the best guess language Giberish's around filter
+        def use_best_guess_locale
+          session[:locale] = GibberishRails.best_guess_locale(params[:locale], request.env['HTTP_ACCEPT_LANGUAGE']) if ( ! session[:locale] || params[:locale] || RAILS_ENV == 'development' )
+
+          Gibberish.use_language(session[:locale]) { 
+            yield
+          }
+        end
+      end
+
+Notes:
+
+If you are using Peter Marklund's gibberish_translate
+(http://www.marklunds.com/articles/one/376), the you should change
+the directories it search to include this one.   Also Peter's plugin
+doesn't pick up the Gibberish String "foo"[] (which is another way
+of saying "foo"[:foo]).  Redefine Gibberish::Extractor methods in
+his plugin to be:
+
+      def dirs_to_search
+        %w(app config lib vendor/plugins/gibberish_rails).map { |dir| "#{RAILS_ROOT}/#{dir}" }
+      end
+
+      def message_pattern(start_token, end_token)
+        /#{start_token}((?:[^#{end_token}](?:\\#{end_token})?)+)#{end_token}\[:*([a-z_]*)[,\]]/m
+      end
+
+      def add_messages(contents, start_token, end_token)
+        contents.scan(message_pattern(start_token, end_token)).each do |text, key|
+          key = text.tr('[   ]', '_').downcase if ( key == '' )
+          add_message(key, remove_quotes(text, end_token))
+        end
+      end
+
+Known Issue:
+
+  When the fields in a form are translated and validated, the div's
+  that created the red boxes aren't working...have to look into
+  that at some point.
+
+
+Copyright (c) 2008 MyUtil(tm), released under the MIT license
+
+Portions of code above Copyright (c) 2007 Peter Marklund:
+http://svn.marklunds.com/plugins/gibberish_translate/MIT-LICENSE
