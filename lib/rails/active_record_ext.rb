@@ -44,17 +44,17 @@ module ActiveRecord #:nodoc:
     # we are in the around filter.   This is a total hack that uses the 
     # entire english message as a key to retranslate it.
 		#
-    def add(attribute, msg = @@default_error_messages[:invalid])
-      attribute_s = attribute.to_s
-      if attribute != :base
-        tmp_msg = msg[msg.tr('[   ]', '_').to_sym]
-        msg = tmp_msg if tmp_msg != nil
-        tmp_attr = attribute_s[attribute]
-        attribute_s = tmp_attr if tmp_attr
-      end
-      @errors[attribute_s] = [] if @errors[attribute_s].nil?
-      @errors[attribute_s] << msg
-    end
+#    def add(attribute, msg = @@default_error_messages[:invalid])
+#      attribute_s = attribute.to_s
+#      if attribute != :base
+#        tmp_msg = msg[msg.tr('[   ]', '_').to_sym]
+#        msg = tmp_msg if tmp_msg != nil
+#        tmp_attr = attribute_s[attribute]
+#        attribute_s = tmp_attr if tmp_attr
+#      end
+#      @errors[attribute_s] = [] if @errors[attribute_s].nil?
+#      @errors[attribute_s] << msg
+#    end
   end
 
   module Validations
