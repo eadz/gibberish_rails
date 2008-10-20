@@ -62,7 +62,7 @@ module ActiveRecord #:nodoc:
 
       # Exactly like rails 2.0.2, except too_short, to_long translated
 			#
-      def validates_length_of(*attrs)
+      def validates_length_of_broken(*attrs)
         # Merge given options with defaults.
         options = {
           :too_long     => ActiveRecord::Errors.default_error_messages[:too_long],
