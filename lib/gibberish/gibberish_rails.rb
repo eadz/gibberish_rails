@@ -17,7 +17,7 @@ module GibberishRails
       return locale if locale && Gibberish.supported?(locale)
 
       found_locale = nil
-
+      return Gibberish.languages.first if accept_header.nil?
       accept_header.split(',').each do |locale|
         locale = locale[/[^,;]+/]
         if ( Gibberish.supported?(locale) ) # First try es-mx
